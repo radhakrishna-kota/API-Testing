@@ -18,6 +18,11 @@ export interface DbServer {
   databaseName: string;
   username: string;
   password: string;
+  oracleAuthenticationType: string;
+  oracleRole: string;
+  oracleConnectionType: string;
+  oracleNetworkAlias: string;
+  oracleSchema: string;
   connectionTimeout: number;
   connectionStatus: ConnectionStatus;
   connectionMessage: string;
@@ -76,8 +81,13 @@ export class DbConfigComponent implements OnInit {
   }
 
   onTypeChange(server: DbServer): void {
-    if (server.type !== 'sqlite') {
+    if (server.type !== 'sqlite' && server.type !== 'oracle') {
       server.port = DEFAULT_PORTS[server.type];
+    } else if (server.type === 'oracle') {
+      server.port = null;
+      server.oracleAuthenticationType = server.oracleAuthenticationType || 'Default';
+      server.oracleRole = server.oracleRole || 'Default';
+      server.oracleConnectionType = 'TNS';
     } else {
       server.port = null;
     }
@@ -115,11 +125,15 @@ export class DbConfigComponent implements OnInit {
   }
 
   testConnection(server: DbServer): void {
-    if (!server.host && server.type !== 'sqlite') {
+    if (server.type === 'oracle' && !server.oracleNetworkAlias.trim()) {
+      this.toastService.show('Please select or enter a network alias before testing.', 'warning', 2500);
+      return;
+    }
+    if (!server.host && server.type !== 'sqlite' && server.type !== 'oracle') {
       this.toastService.show('Please enter a host address before testing.', 'warning', 2500);
       return;
     }
-    if (server.type !== 'sqlite' && !server.databaseName) {
+    if (server.type !== 'sqlite' && server.type !== 'oracle' && !server.databaseName) {
       this.toastService.show('Please enter a database name before testing.', 'warning', 2500);
       return;
     }
@@ -135,18 +149,30 @@ export class DbConfigComponent implements OnInit {
     const delay = 800 + Math.floor(Math.random() * 600);
     setTimeout(() => {
       const elapsed = Date.now() - start;
-      // Basic validation: if host looks valid and credentials present → success simulation
+      // Basic validation: if connection target looks valid and credentials present → success simulation
       const hasCredentials = server.type === 'sqlite' || (server.username.trim().length > 0);
-      const hostOk = server.type === 'sqlite' || /^[\w\-\.]+$/.test(server.host.trim());
+      const targetOk = server.type === 'sqlite'
+        || (server.type === 'oracle'
+          ? /^[\w\-.]+$/.test(server.oracleNetworkAlias.trim())
+          : /^[\w\-.]+$/.test(server.host.trim()));
+      const targetName = server.type === 'sqlite'
+        ? server.databaseName || 'file'
+        : server.type === 'oracle'
+          ? server.oracleNetworkAlias
+          : server.host;
 
-      if (hostOk && hasCredentials) {
+      if (targetOk && hasCredentials) {
         server.connectionStatus = 'success';
-        server.connectionMessage = `Connection successful to '${server.type === 'sqlite' ? server.databaseName || 'file' : server.host}'.`;
+        server.connectionMessage = server.type === 'oracle'
+          ? `Connection successful to Oracle network alias '${targetName}'.`
+          : `Connection successful to '${targetName}'.`;
         server.latencyMs = elapsed;
       } else {
         server.connectionStatus = 'failed';
-        server.connectionMessage = !hostOk
-          ? `Cannot resolve host '${server.host}'. Check the server address.`
+        server.connectionMessage = !targetOk
+          ? server.type === 'oracle'
+            ? `Cannot resolve Oracle network alias '${server.oracleNetworkAlias}'. Check the TNS alias.`
+            : `Cannot resolve host '${server.host}'. Check the server address.`
           : `Authentication failed. Verify username and password.`;
         server.latencyMs = null;
       }
@@ -188,6 +214,11 @@ export class DbConfigComponent implements OnInit {
       databaseName: '',
       username: '',
       password: '',
+      oracleAuthenticationType: 'Default',
+      oracleRole: 'Default',
+      oracleConnectionType: 'TNS',
+      oracleNetworkAlias: '',
+      oracleSchema: '',
       connectionTimeout: 30,
       connectionStatus: 'idle',
       connectionMessage: '',
@@ -200,7 +231,7 @@ export class DbConfigComponent implements OnInit {
     try {
       const raw = localStorage.getItem(this.storageKey);
       if (raw) {
-        this.servers = JSON.parse(raw) as DbServer[];
+        this.servers = (JSON.parse(raw) as Partial<DbServer>[]).map(server => this.normalizeServer(server));
       }
     } catch {
       this.servers = [];
@@ -212,5 +243,20 @@ export class DbConfigComponent implements OnInit {
 
   private saveServers(): void {
     localStorage.setItem(this.storageKey, JSON.stringify(this.servers));
+  }
+
+  private normalizeServer(server: Partial<DbServer>): DbServer {
+    return {
+      ...this.createServer(server.name?.trim() || 'Database Server'),
+      ...server,
+      port: server.type === 'oracle'
+        ? null
+        : server.port ?? (server.type ? DEFAULT_PORTS[server.type] : DEFAULT_PORTS['sqlserver']),
+      oracleAuthenticationType: server.oracleAuthenticationType || 'Default',
+      oracleRole: server.oracleRole || 'Default',
+      oracleConnectionType: 'TNS',
+      oracleNetworkAlias: server.oracleNetworkAlias || '',
+      oracleSchema: server.oracleSchema || ''
+    };
   }
 }
