@@ -1,0 +1,47 @@
+<div class="request-history-page">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>Request History</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn" (click)="backToHome()">Home</button>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="empty-state" *ngIf="!modules.length">
+      <h2>No module history found</h2>
+      <p>Save module APIs from Configuration page to see history here.</p>
+    </div>
+
+    <div class="module-card" *ngFor="let module of modules">
+      <h2>{{ module.name }}</h2>
+      <p>{{ module.description }}</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>API Name</th>
+            <th>Method</th>
+            <th>URL</th>
+            <th>Enabled</th>
+            <th>Added By</th>
+            <th>Added At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let api of module.apis">
+            <td>{{ api.name }}</td>
+            <td>{{ api.request?.method }}</td>
+            <td class="url-cell" [title]="api.request?.url || ''">{{ api.request?.url || '-' }}</td>
+            <td>{{ api.enabled ? 'Active' : 'InActive' }}</td>
+            <td>{{ api.addedBy }}</td>
+            <td>{{ api.addedAt | date:'medium' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

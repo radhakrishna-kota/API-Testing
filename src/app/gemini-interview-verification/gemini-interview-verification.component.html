@@ -1,0 +1,81 @@
+<div class="analysis-shell">
+  <header class="hero">
+    <div class="hero-top">
+      <h1>Gemini AI Interview Verification</h1>
+      <a routerLink="/home" class="back-link">Back to Home</a>
+    </div>
+    <p>Use Gemini 2.0 Flash as a dedicated verification module for proxy/fake interview detection.</p>
+  </header>
+
+  <section class="upload-panel">
+    <label for="geminiVideoInput">Interview Video</label>
+    <input id="geminiVideoInput" type="file" accept="video/*" (change)="onInterviewVideoSelected($event)" />
+    <p class="status">{{ uploadStatus }}</p>
+  </section>
+
+  <section class="llm-panel">
+    <h2>AI Fraud Detection <span class="llm-badge">Gemini 2.0 Flash</span></h2>
+    <p class="llm-desc">This page runs only Gemini-based analysis. Enter your API key and click detect to generate a dedicated AI integrity report.</p>
+
+    <div class="llm-key-row">
+      <label for="geminiKey">Gemini API Key</label>
+      <div class="llm-key-input-wrap">
+        <input
+          id="geminiKey"
+          [type]="showApiKey ? 'text' : 'password'"
+          [(ngModel)]="geminiApiKey"
+          placeholder="AIza..."
+          autocomplete="off"
+          spellcheck="false" />
+        <button type="button" class="btn-icon" (click)="showApiKey = !showApiKey" [title]="showApiKey ? 'Hide key' : 'Show key'">
+          {{ showApiKey ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="key-link">Get a free API key</a>
+    </div>
+
+    <div class="llm-actions">
+      <button
+        type="button"
+        class="btn llm-btn"
+        (click)="runLlmAnalysis()"
+        [disabled]="!uploadedInterviewFile || isLlmAnalyzing || !geminiApiKey.trim()">
+        {{ isLlmAnalyzing ? 'Analyzing with Gemini...' : 'Detect Fake/Proxy Interview' }}
+      </button>
+    </div>
+
+    <p class="llm-status" *ngIf="llmStatus">{{ llmStatus }}</p>
+  </section>
+
+  <section class="preview-panel" *ngIf="uploadedMediaUrl">
+    <h2>Uploaded Interview Video</h2>
+    <video [src]="uploadedMediaUrl" playsinline muted controls></video>
+  </section>
+
+  <section class="llm-report-panel" *ngIf="llmReport">
+    <h2>Gemini AI Integrity Report</h2>
+
+    <div class="llm-verdict" [class.genuine]="llmReport.verdict === 'genuine'" [class.suspicious]="llmReport.verdict === 'suspicious'" [class.likely-proxy]="llmReport.verdict === 'likely-proxy'">
+      <span class="verdict-label">Verdict:</span>
+      <span class="verdict-value">{{ llmReport.verdict | uppercase }}</span>
+      <span class="confidence-tag">Confidence: {{ llmReport.confidence }}</span>
+      <span class="model-tag">Model: {{ llmReport.model }}</span>
+    </div>
+
+    <div class="llm-indicator-grid">
+      <div
+        class="llm-indicator-card"
+        *ngFor="let ind of llmReport.indicators"
+        [class.flagged]="ind.flagged">
+        <div class="ind-header">
+          <span class="ind-icon">{{ ind.flagged ? 'FLAG' : 'OK' }}</span>
+          <strong>{{ ind.label }}</strong>
+        </div>
+        <p class="ind-detail">{{ ind.detail }}</p>
+      </div>
+    </div>
+
+    <p class="llm-summary">{{ llmReport.summary }}</p>
+    <p class="llm-disclaimer">This AI analysis is an investigative aid and must not be the sole basis for hiring decisions.</p>
+  </section>
+</div>

@@ -1,0 +1,408 @@
+<div class="soa-page">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>SOA Services Intelligence</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn action-btn" (click)="goToServiceModules()" title="Service Modules">
+          <span class="btn-icon">⚙</span><span>Service Modules</span>
+        </button>
+        <button class="secondary-btn action-btn" (click)="backToHome()" title="Home">
+          <span class="btn-icon">🏠</span><span>Home</span>
+        </button>
+        <button class="logout-btn action-btn" (click)="logout()" title="Logout">
+          <span class="btn-icon">↩</span><span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content-wrap">
+    <section class="filters-card">
+      <div class="filters-head">
+        <h2>Data-Driven Filters</h2>
+        <button class="secondary-plain-btn" (click)="resetFilters()">Reset Filters</button>
+      </div>
+
+      <div class="filters-grid">
+        <div class="field">
+          <label>Sheet</label>
+          <select [(ngModel)]="selectedSheet" (ngModelChange)="onSheetChanged()">
+            <option *ngFor="let sheet of sheetOptions" [value]="sheet">{{ sheet }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Service</label>
+          <select [(ngModel)]="selectedService" (ngModelChange)="applyFilters()">
+            <option value="All">All</option>
+            <option *ngFor="let service of availableServices; trackBy: trackByService" [value]="service.service">
+              {{ service.service }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Service Type</label>
+          <select [(ngModel)]="selectedServiceType" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of serviceTypeOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Database Type</label>
+          <select [(ngModel)]="selectedDatabaseType" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of databaseTypeOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Pipeline</label>
+          <select [(ngModel)]="selectedPipeline" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of pipelineOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Database Token</label>
+          <select [(ngModel)]="selectedDatabaseToken" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of databaseTokenOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Server Host</label>
+          <select [(ngModel)]="selectedServerHost" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of serverHostOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>App Pool</label>
+          <select [(ngModel)]="selectedAppPool" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of appPoolOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Environment URL</label>
+          <select [(ngModel)]="selectedEnvironment" (ngModelChange)="applyFilters()">
+            <option *ngFor="let item of environmentOptions" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="field wide">
+          <label>Global Search</label>
+          <input
+            type="text"
+            [(ngModel)]="textSearch"
+            (ngModelChange)="applyFilters()"
+            placeholder="Search service, repo, URL, account, comments, and all available columns"
+          />
+        </div>
+
+        <div class="field">
+          <label>End Users Search</label>
+          <input
+            type="text"
+            [(ngModel)]="usersSearch"
+            (ngModelChange)="applyFilters()"
+            placeholder="e.g. Salesforce"
+          />
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">Filtered Services</div>
+          <div class="stat-value">{{ totalCount }}</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-title">Missing Prod URL</div>
+          <div class="stat-value">{{ prodUrlMissingCount }}</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-title">No Pipeline</div>
+          <div class="stat-value">{{ noPipelineCount }}</div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-title">Hybrid SQL + Oracle</div>
+          <div class="stat-value">{{ hybridDbCount }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="insights-card">
+      <h2>Scenario Suggestions</h2>
+      <div class="insight-list">
+        <div class="insight-item" *ngFor="let insight of scenarioInsights">
+          <span class="severity" [class]="badgeClass(insight.severity)">{{ insight.severity | uppercase }}</span>
+          <div class="insight-body">
+            <h3>{{ insight.title }}</h3>
+            <p><strong>Why:</strong> {{ insight.reason }}</p>
+            <p><strong>Best approach:</strong> {{ insight.recommendation }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="service-list-card" *ngIf="!loading && !loadError">
+      <div class="table-head">
+        <h2>Available Services</h2>
+        <span class="result-meta">{{ availableServices.length }} services available for the current selection</span>
+      </div>
+
+      <div class="service-list" *ngIf="availableServices.length > 0; else emptyServices">
+        <button
+          *ngFor="let service of availableServices; trackBy: trackByService"
+          class="service-chip"
+          [class.active]="selectedService === service.service"
+          (click)="selectService(service.service)"
+        >
+          <strong>{{ service.service }}</strong>
+          <span>{{ service.serviceType || 'Unknown type' }}</span>
+        </button>
+      </div>
+
+      <ng-template #emptyServices>
+        <div class="empty-sheet-state">
+          <h3>No services matched</h3>
+          <p>Adjust the sheet or filter selections to see available services.</p>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="detail-card" *ngIf="!loading && !loadError && selectedRecord as record; else noSelection">
+      <div class="detail-head">
+        <div>
+          <h2>{{ record.service || 'Selected Service' }}</h2>
+          <p>{{ record.sheetName }} | {{ record.serviceType || 'Unknown type' }} | {{ record.databaseType || 'No database info' }}</p>
+        </div>
+      </div>
+
+      <section class="collection-card postman-shell">
+        <aside class="postman-sidebar">
+          <h3>Collection Configuration</h3>
+
+          <div class="sidebar-group">
+            <button class="primary-btn action-btn" (click)="linkCollectionFile(postmanFileInput)">
+              {{ hasSavedCollectionLink ? 'Change Linked Collection' : 'Link Collection Permanently' }}
+            </button>
+            <button class="secondary-plain-btn" (click)="reloadSavedCollection()" [disabled]="!hasSavedCollectionLink || isReloadingLinkedCollection">
+              {{ isReloadingLinkedCollection ? 'Loading Linked File...' : 'Load Linked File' }}
+            </button>
+            <button class="secondary-plain-btn" (click)="openPostmanImporter(postmanFileInput)">Upload Once</button>
+            <button class="secondary-plain-btn" (click)="clearAttachedCollection()" [disabled]="collectionRequests.length === 0">Clear Collection</button>
+            <input
+              #postmanFileInput
+              class="hidden-file-input"
+              type="file"
+              accept="application/json,.json"
+              (change)="onPostmanFileSelected($event)"
+            />
+            <span class="collection-file" *ngIf="collectionFileName">{{ collectionFileName }}</span>
+            <span class="linked-tag" *ngIf="hasSavedCollectionLink">Linked file saved for next time</span>
+          </div>
+
+          <div class="sidebar-group">
+            <label class="sidebar-label">Run Environment</label>
+            <select [(ngModel)]="selectedExecutionEnvironment" (ngModelChange)="onExecutionEnvironmentChanged()">
+              <option value="dev">DEV</option>
+              <option value="test">TEST</option>
+              <option value="prod">PROD</option>
+            </select>
+            <button class="primary-btn action-btn" (click)="runAllGetCalls()" [disabled]="collectionRequests.length === 0 || isRunningCollection">
+              {{ isRunningCollection ? 'Running Calls...' : 'Run All Calls' }}
+            </button>
+            <span class="result-meta">{{ allowPostCalls ? 'GET and POST methods' : 'Only GET methods' }} are executed in batch.</span>
+          </div>
+
+          <div class="sidebar-group auth-section">
+            <div class="auth-controls">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="allowPostCalls" />
+                <span>Enable POST Calls</span>
+              </label>
+            </div>
+
+            <div *ngIf="allowPostCalls" class="auth-config">
+              <div class="auth-type-selector">
+                <label class="radio-label">
+                  <input type="radio" name="authType" [checked]="authType === 'windows'" (click)="setAuthType('windows')" />
+                  Windows Credentials
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="authType" [checked]="authType === 'basic'" (click)="setAuthType('basic')" />
+                  Basic Auth
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="authType" [checked]="authType === 'none'" (click)="setAuthType('none')" />
+                  No Auth
+                </label>
+              </div>
+
+              <div *ngIf="authType === 'windows'" class="auth-fields">
+                <div class="form-row">
+                  <label>Domain</label>
+                  <input type="text" [(ngModel)]="windowsDomain" placeholder="e.g., CORP" />
+                </div>
+                <div class="form-row">
+                  <label>Username</label>
+                  <input type="text" [(ngModel)]="windowsUsername" placeholder="Windows username" />
+                </div>
+                <div class="form-row">
+                  <label>Password</label>
+                  <input type="password" [(ngModel)]="windowsPassword" placeholder="Password" />
+                </div>
+              </div>
+
+              <div *ngIf="authType === 'basic'" class="auth-fields">
+                <div class="form-row">
+                  <label>Username</label>
+                  <input type="text" [(ngModel)]="basicUsername" placeholder="Username" />
+                </div>
+                <div class="form-row">
+                  <label>Password</label>
+                  <input type="password" [(ngModel)]="basicPassword" placeholder="Password" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-group">
+            <label class="sidebar-label">Requests</label>
+            <div class="request-nav-list" *ngIf="collectionRequests.length > 0; else emptyCollection">
+              <button
+                *ngFor="let request of collectionRequests; trackBy: trackByIndex"
+                class="request-nav-item"
+                [class.active]="selectedRequestId === request.id"
+                (click)="selectRequest(request.id)"
+              >
+                <span class="method-badge" [ngClass]="request.method.toLowerCase()">{{ request.method }}</span>
+                <span class="request-nav-copy">{{ request.name }}</span>
+                <span class="request-status" [ngClass]="request.status">{{ request.status }}</span>
+              </button>
+            </div>
+          </div>
+
+          <ng-template #emptyCollection>
+            <div class="status-card compact">
+              <p>No collection loaded. Upload or link a collection file.</p>
+            </div>
+          </ng-template>
+        </aside>
+
+        <section class="postman-main" *ngIf="selectedRequest as request; else noRequestSelected">
+          <div class="postman-url-row">
+            <div class="url-method-wrap">
+              <span class="method-badge" [ngClass]="request.method.toLowerCase()">{{ request.method }}</span>
+            </div>
+
+            <div class="url-input-wrap">
+              <label class="url-input-label">Resolved URL</label>
+              <input class="postman-url-input" [value]="request.resolvedUrl" readonly />
+            </div>
+
+            <div class="url-action-wrap">
+              <button class="primary-btn action-btn run-single-btn" (click)="runSingleRequest(request)" [disabled]="isRunningCollection">
+                {{ isRunningCollection ? 'Running...' : 'Run This Request' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="postman-panels">
+            <article class="panel-card">
+              <h3>Request</h3>
+
+              <div class="params-section" *ngIf="getVisibleQueryParams(request).length > 0">
+                <h4>Query Parameters</h4>
+                <table class="params-table">
+                  <thead>
+                    <tr><th>Key</th><th>Value</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let param of getVisibleQueryParams(request)">
+                      <td>{{ param.key }}</td>
+                      <td>{{ param.value }}</td>
+                      <td><span class="status-badge" [class.enabled]="param.enabled" [class.disabled]="!param.enabled">{{ param.enabled ? 'Enabled' : 'Disabled' }}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="params-section" *ngIf="getVisibleHeaders(request).length > 0">
+                <h4>Headers</h4>
+                <table class="params-table">
+                  <thead>
+                    <tr><th>Key</th><th>Value</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let header of getVisibleHeaders(request)">
+                      <td>{{ header.key }}</td>
+                      <td>{{ header.value }}</td>
+                      <td><span class="status-badge" [class.enabled]="header.enabled" [class.disabled]="!header.enabled">{{ header.enabled ? 'Enabled' : 'Disabled' }}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="params-section" *ngIf="request.requestBody">
+                <h4>Body</h4>
+                <pre class="body-preview">{{ formatPayload(request.requestBody) }}</pre>
+              </div>
+            </article>
+
+            <article class="panel-card response-panel">
+              <h3>Response</h3>
+              <div class="response-meta">
+                <span class="request-status" [ngClass]="request.status">{{ request.statusText }}</span>
+                <span class="result-meta" *ngIf="request.responseCode !== null">Status: {{ request.responseCode }}</span>
+                <span class="result-meta" *ngIf="request.responseTimeMs !== null">Time: {{ request.responseTimeMs }} ms</span>
+              </div>
+              <pre class="body-preview response-body">{{ request.responseBody ? formatPayload(request.responseBody) : 'Run this request to view response body.' }}</pre>
+            </article>
+          </div>
+        </section>
+
+        <ng-template #noRequestSelected>
+          <section class="postman-main empty-main">
+            <h3>No request selected</h3>
+            <p>Select a request on the left to see URL, request configuration, and response.</p>
+          </section>
+        </ng-template>
+      </section>
+
+      <div class="detail-sections">
+        <section class="detail-section" *ngFor="let section of selectedRecordSections; trackBy: trackByIndex">
+          <div class="section-header" (click)="toggleSectionExpanded(section.title)">
+            <h3>{{ section.title }}</h3>
+            <span class="toggle-icon" [style.transform]="isSectionExpanded(section.title) ? 'rotate(90deg)' : 'rotate(0deg)'">▶</span>
+          </div>
+          <div class="detail-grid" *ngIf="isSectionExpanded(section.title)">
+            <div class="detail-row" *ngFor="let field of section.fields; trackBy: trackByIndex">
+              <div class="detail-key">{{ field.key }}</div>
+              <div class="detail-value">{{ field.value }}</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <ng-template #noSelection>
+      <section class="status-card">
+        <h2>Select a service to view full details</h2>
+        <p>Choose a service group first, then pick a service to display all information in a single sheet.</p>
+      </section>
+    </ng-template>
+
+    <section class="status-card" *ngIf="loading">
+      <h2>Loading workbook data...</h2>
+      <p>Reading all sheets and projecting fields for data-driven search.</p>
+    </section>
+
+    <section class="status-card error" *ngIf="loadError">
+      <h2>Unable to load SOA workbook</h2>
+      <p>{{ loadError }}</p>
+    </section>
+  </div>
+</div>

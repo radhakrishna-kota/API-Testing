@@ -1,0 +1,160 @@
+<div class="home-container">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>API Tester</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <!-- Group Tiles -->
+    <div class="features">
+      <div
+        class="feature-card clickable"
+        [class.active]="activePanel === 'api-request'"
+        (click)="openPanel('api-request')"
+      >
+        <div class="card-icon">📋</div>
+        <h3>API Request</h3>
+        <p>Manage API requests, history, and configuration</p>
+        <span class="card-arrow">{{ activePanel === 'api-request' ? '▲ Close' : '▼ Open' }}</span>
+      </div>
+
+      <div
+        class="feature-card clickable"
+        [class.active]="activePanel === 'db-request'"
+        (click)="openPanel('db-request')"
+      >
+        <div class="card-icon">🗄️</div>
+        <h3>DB Request</h3>
+        <p>Manage database requests and configurations</p>
+        <span class="card-arrow">{{ activePanel === 'db-request' ? '▲ Close' : '▼ Open' }}</span>
+      </div>
+
+      <div
+        class="feature-card clickable"
+        [class.active]="activePanel === 'soa-request'"
+        (click)="openPanel('soa-request')"
+      >
+        <div class="card-icon">📑</div>
+        <h3>SOA Request</h3>
+        <p>Analyze SOA service inventory, infra mapping, and deployment readiness</p>
+        <span class="card-arrow">{{ activePanel === 'soa-request' ? '▲ Close' : '▼ Open' }}</span>
+      </div>
+
+      <div class="feature-card clickable" style="display: none;" (click)="goToInterviewVerification()">
+        <div class="card-icon">🕵️</div>
+        <h3>Interview Integrity</h3>
+        <p>Run post-interview screen verification, capture evidence, and export a report</p>
+        <span class="card-arrow">▼ Open</span>
+      </div>
+
+      <div class="feature-card clickable" style="display: none;" (click)="goToGeminiInterviewVerification()">
+        <div class="card-icon">🤖</div>
+        <h3>Gemini AI Verification</h3>
+        <p>Run a dedicated Gemini-only fake/proxy interview detection workflow</p>
+        <span class="card-arrow">▼ Open</span>
+      </div>
+
+      <div class="feature-card clickable" style="display: none;"  (click)="goToFreeLlmInterviewVerification()">
+        <div class="card-icon">🆓</div>
+        <h3>Free LLM Verification</h3>
+        <p>Use a free Llama model with browser-based interview signals for integrity checks</p>
+        <span class="card-arrow">▼ Open</span>
+      </div>
+    </div>
+
+    <!-- API Request Sub-Panel -->
+    <div class="sub-panel" *ngIf="activePanel === 'api-request'">
+      <div class="sub-panel-header">
+        <h2>📋 API Request</h2>
+      </div>
+      <div class="sub-features">
+        <div class="feature-card clickable" [class.active]="activeSubPanel === 'api-testing'" (click)="openSubPanel('api-testing')">
+          <div class="card-icon">🚀</div>
+          <h3>API Testing</h3>
+          <p>Send HTTP requests to any API endpoint directly</p>
+          <span class="card-arrow">{{ activeSubPanel === 'api-testing' ? '▲ Close' : '▼ Open' }}</span>
+        </div>
+
+        <div class="feature-card clickable" (click)="goToResponseAnalysis()">
+          <div class="card-icon">📊</div>
+          <h3>API Response Analysis</h3>
+          <p>View and analyze API responses</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+
+        <div class="feature-card clickable" (click)="goToRequestHistory()">
+          <div class="card-icon">💾</div>
+          <h3>API Request History</h3>
+          <p>Keep track of your API testing history</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+
+        <div class="feature-card clickable" (click)="goToServiceModules()">
+          <div class="card-icon">⚙️</div>
+          <h3>API Configuration</h3>
+          <p>Configure headers, parameters, and body</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+      </div>
+
+      <!-- Inline API Tester -->
+      <div class="api-panel" *ngIf="activeSubPanel === 'api-testing'">
+        <div class="api-panel-header">
+          <h2>🚀 API Request Tester</h2>
+          <button class="close-panel-btn" (click)="openSubPanel('api-testing')">✕ Close</button>
+        </div>
+        <app-api-tester></app-api-tester>
+      </div>
+    </div>
+
+    <!-- DB Request Sub-Panel -->
+    <div class="sub-panel" *ngIf="activePanel === 'db-request'">
+      <div class="sub-panel-header">
+        <h2>🗄️ DB Request</h2>
+      </div>
+      <div class="sub-features">
+        <div class="feature-card clickable" (click)="goToDbConfig()">
+          <div class="card-icon">🗄️</div>
+          <h3>DB Configuration</h3>
+          <p>Configure database servers and test connections</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+
+        <div class="feature-card clickable" (click)="goToDbStoredProcedure()">
+          <div class="card-icon">🧩</div>
+          <h3>Stored Procedure Generator</h3>
+          <p>Generate stored procedures using tables and where clauses</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+
+        <div class="feature-card clickable" (click)="goToAnalyzeSP()">
+          <div class="card-icon">🔍</div>
+          <h3>Analyze Stored Procedure</h3>
+          <p>Paste an existing SP to extract tables, joins, parameters and get optimization suggestions</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SOA Request Sub-Panel -->
+    <div class="sub-panel" *ngIf="activePanel === 'soa-request'">
+      <div class="sub-panel-header">
+        <h2>📑 SOA Request</h2>
+      </div>
+      <div class="sub-features">
+        <div class="feature-card clickable" (click)="goToSoaServiceCatalog()">
+          <div class="card-icon">🧠</div>
+          <h3>SOA Services Intelligence</h3>
+          <p>Excel-driven service inventory with multi-filter search, scenarios, server and database insights</p>
+          <span class="card-arrow">▼ Open</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

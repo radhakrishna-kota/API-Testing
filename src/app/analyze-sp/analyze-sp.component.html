@@ -1,0 +1,177 @@
+<div class="page">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>🔍 Analyze Stored Procedure</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn action-btn" (click)="goToSpGenerator()" title="SP Generator">
+          <span class="btn-icon">🧩</span><span>SP Generator</span>
+        </button>
+        <button class="secondary-btn action-btn" (click)="backToHome()" title="Home">
+          <span class="btn-icon">🏠</span><span>Home</span>
+        </button>
+        <button class="logout-btn action-btn" (click)="logout()" title="Logout">
+          <span class="btn-icon">↩</span><span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Input Row -->
+  <div class="input-bar">
+    <span class="input-label">Paste your stored procedure SQL below, then click <strong>Analyze</strong>.</span>
+    <div class="input-actions">
+      <button class="primary-btn action-btn" (click)="analyzeSP()">
+        <span class="btn-icon">🔍</span><span>Analyze</span>
+      </button>
+      <button class="secondary-btn action-btn" (click)="clearAll()">
+        <span class="btn-icon">🗑</span><span>Clear</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="sp-input-wrap">
+    <textarea
+      class="sp-textarea"
+      [(ngModel)]="spInput"
+      rows="10"
+      placeholder="Paste your stored procedure here...&#10;&#10;Example:&#10;CREATE PROCEDURE sp_GetMembers&#10;(&#10;    @StatusCode NVARCHAR(10) = NULL&#10;)&#10;AS&#10;BEGIN&#10;    SET NOCOUNT ON;&#10;    SELECT m.MemberId, m.MemberName&#10;    FROM Members m&#10;    INNER JOIN Claims c ON m.MemberId = c.MemberId&#10;    WHERE m.StatusCode = @StatusCode&#10;END"
+    ></textarea>
+  </div>
+
+  <div class="error-bar" *ngIf="analysisError">
+    ⚠️ {{ analysisError }}
+  </div>
+
+  <!-- Side-by-side Analysis Result -->
+  <div class="result-grid" *ngIf="analysis">
+
+    <!-- LEFT: Analysis -->
+    <div class="panel analysis-panel">
+      <h2 class="panel-title">📊 Analysis — <span class="proc-name">{{ analysis.procedureName }}</span></h2>
+
+      <!-- Parameters -->
+      <div class="section">
+        <div class="section-title">
+          <span class="badge blue">{{ analysis.params.length }}</span>
+          Input Parameters
+        </div>
+        <div class="empty-hint" *ngIf="analysis.params.length === 0">None detected</div>
+        <table class="data-table" *ngIf="analysis.params.length > 0">
+          <thead>
+            <tr><th>Parameter</th><th>Data Type</th><th>Default</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of analysis.params">
+              <td class="mono">{{ p.paramName }}</td>
+              <td class="mono">{{ p.dataType }}</td>
+              <td class="mono">{{ p.defaultValue || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tables -->
+      <div class="section">
+        <div class="section-title">
+          <span class="badge green">{{ analysis.tables.length }}</span>
+          Tables Involved
+        </div>
+        <div class="empty-hint" *ngIf="analysis.tables.length === 0">None detected</div>
+        <table class="data-table" *ngIf="analysis.tables.length > 0">
+          <thead>
+            <tr><th>Table</th><th>Alias</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of analysis.tables">
+              <td class="mono">{{ t.name }}</td>
+              <td class="mono">{{ t.alias }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Joins -->
+      <div class="section">
+        <div class="section-title">
+          <span class="badge orange">{{ analysis.joins.length }}</span>
+          Joins
+        </div>
+        <div class="empty-hint" *ngIf="analysis.joins.length === 0">No joins detected</div>
+        <div class="join-card" *ngFor="let j of analysis.joins">
+          <span class="join-type-badge">{{ j.joinType }}</span>
+          <span class="join-table">{{ j.table }} <em>({{ j.alias }})</em></span>
+          <span class="join-on">ON {{ j.onCondition }}</span>
+        </div>
+      </div>
+
+      <!-- Where Clauses -->
+      <div class="section">
+        <div class="section-title">
+          <span class="badge purple">{{ analysis.whereClauses.length }}</span>
+          WHERE Clause Parameters
+        </div>
+        <div class="empty-hint" *ngIf="analysis.whereClauses.length === 0">No WHERE clause detected</div>
+        <table class="data-table" *ngIf="analysis.whereClauses.length > 0">
+          <thead>
+            <tr><th>Field</th><th>Operator</th><th>Param / Value</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let w of analysis.whereClauses">
+              <td class="mono">{{ w.field }}</td>
+              <td class="mono op">{{ w.operator }}</td>
+              <td class="mono">{{ w.paramOrValue }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Select Columns -->
+      <div class="section">
+        <div class="section-title">
+          <span class="badge teal">{{ analysis.selectColumns.length }}</span>
+          SELECT Columns
+        </div>
+        <div class="empty-hint" *ngIf="analysis.selectColumns.length === 0">None detected</div>
+        <ul class="col-list" *ngIf="analysis.selectColumns.length > 0">
+          <li *ngFor="let c of analysis.selectColumns" class="mono">{{ c }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT: Best Approach / Suggestions -->
+    <div class="panel suggest-panel">
+      <h2 class="panel-title">💡 Best Approach Suggestions</h2>
+
+      <div class="suggestions-list">
+        <div
+          class="suggestion-item"
+          *ngFor="let s of analysis.suggestions"
+          [class.warn]="s.startsWith('⚠️')"
+          [class.info]="s.startsWith('💡')"
+          [class.ok]="s.startsWith('✅')"
+          [class.note]="s.startsWith('ℹ️')"
+        >
+          {{ s }}
+        </div>
+      </div>
+
+      <div class="optimized-head">
+        <h3>✨ Optimized / Suggested SQL</h3>
+        <button class="primary-btn action-btn small-btn" (click)="copyOptimized()">
+          <span class="btn-icon">📋</span><span>Copy</span>
+        </button>
+      </div>
+      <textarea class="opt-textarea" [value]="analysis.optimizedSql" rows="22" readonly></textarea>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!analysis && !analysisError">
+    <div class="empty-icon">🔍</div>
+    <h3>Paste a stored procedure above and click Analyze</h3>
+    <p>The analyzer will extract tables, joins, WHERE clause parameters, and suggest improvements side by side.</p>
+  </div>
+</div>

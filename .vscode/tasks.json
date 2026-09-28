@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ng serve",
+      "type": "shell",
+      "command": "npm",
+      "args": ["start"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(?:\\[\\d+m)?([^(]*)\\((\\d+),(\\d+)\\): (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*",
+          "endsPattern": "^.*Application bundle generated.*"
+        }
+      }
+    },
+    {
+      "label": "ng build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"]
+    }
+  ]
+}

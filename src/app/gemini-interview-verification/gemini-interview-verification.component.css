@@ -1,0 +1,272 @@
+.analysis-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.hero,
+.upload-panel,
+.preview-panel,
+.llm-panel,
+.llm-report-panel {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.hero {
+  background: linear-gradient(135deg, #1f2937, #0f4c81);
+  color: #ffffff;
+}
+
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+}
+
+.back-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.back-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.upload-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.upload-panel input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.status {
+  color: #334155;
+  margin: 0;
+}
+
+.llm-panel,
+.llm-report-panel {
+  border-left: 4px solid #2563eb;
+}
+
+.llm-panel h2,
+.llm-report-panel h2 {
+  margin-bottom: 8px;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.llm-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.llm-desc {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+.llm-key-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.llm-key-row label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.llm-key-input-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.llm-key-input-wrap input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.key-link {
+  font-size: 12px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.llm-actions {
+  margin-bottom: 10px;
+}
+
+.btn.llm-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.llm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.llm-status {
+  font-size: 13px;
+  color: #1d4ed8;
+  font-style: italic;
+}
+
+.preview-panel video {
+  width: 100%;
+  max-height: 460px;
+  border-radius: 10px;
+  background: #0f172a;
+}
+
+.llm-verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.llm-verdict.genuine {
+  background: #dcfce7;
+  border-color: #16a34a;
+}
+
+.llm-verdict.suspicious {
+  background: #fef9c3;
+  border-color: #ca8a04;
+}
+
+.llm-verdict.likely-proxy {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.verdict-label {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.verdict-value {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.confidence-tag,
+.model-tag {
+  font-size: 12px;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.llm-indicator-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.llm-indicator-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.llm-indicator-card.flagged {
+  background: #fff7ed;
+  border-color: #f97316;
+}
+
+.ind-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ind-icon {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.ind-detail {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+.llm-summary {
+  font-weight: 600;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+}
+
+.llm-disclaimer {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .analysis-shell {
+    padding: 12px;
+  }
+}

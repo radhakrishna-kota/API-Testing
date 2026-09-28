@@ -1,0 +1,169 @@
+<div class="service-modules-page">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>Service Modules</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn action-btn" (click)="backToHome()" title="Home">
+          <span class="btn-icon">🏠</span><span>Home</span>
+        </button>
+        <button class="logout-btn action-btn" (click)="logout()" title="Logout">
+          <span class="btn-icon">↩</span><span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside class="module-tiles">
+      <h2>Modules</h2>
+      <div class="tile-list">
+        <button
+          *ngFor="let module of modules; trackBy: trackByModule"
+          class="tile"
+          [class.active]="selectedModuleId === module.id"
+          (click)="selectModule(module.id)"
+        >
+          <strong>{{ module.name }} <span class="module-count">({{ module.apis.length }})</span></strong>
+        </button>
+      </div>
+
+      <div class="add-module-box">
+        <input
+          type="text"
+          [(ngModel)]="customModuleName"
+          placeholder="Custom module name"
+          (keyup.enter)="addCustomModule()"
+        />
+        <button class="primary-btn action-btn" (click)="addCustomModule()" title="Add custom module">
+          <span class="btn-icon">➕</span><span>Add Module</span>
+        </button>
+      </div>
+
+      <div class="global-settings-box">
+        <h3>Global Settings</h3>
+
+        <label>Environment</label>
+        <select [(ngModel)]="globalSettings.selectedEnvironment" (ngModelChange)="onEnvironmentChanged()">
+          <option *ngFor="let env of environmentOptions" [value]="env">{{ env.toUpperCase() }}</option>
+        </select>
+
+        <label>Domain</label>
+        <input
+          type="text"
+          [(ngModel)]="globalSettings.environments[globalSettings.selectedEnvironment].domain"
+          placeholder="https://api.example.com"
+        />
+
+        <label>Server Address</label>
+        <input
+          type="text"
+          [(ngModel)]="globalSettings.environments[globalSettings.selectedEnvironment].serverAddress"
+          placeholder="https://api.example.com"
+        />
+
+        <label>Application Name</label>
+        <input
+          type="text"
+          [(ngModel)]="globalSettings.environments[globalSettings.selectedEnvironment].applicationName"
+          placeholder="my-application"
+        />
+
+        <label>Username</label>
+        <input
+          type="text"
+          [(ngModel)]="globalSettings.environments[globalSettings.selectedEnvironment].username"
+          placeholder="Service username"
+        />
+
+        <label>Password</label>
+        <input
+          type="password"
+          [(ngModel)]="globalSettings.environments[globalSettings.selectedEnvironment].password"
+          placeholder="Service password"
+        />
+
+        <button class="secondary-btn action-btn" (click)="saveGlobalSettings()" title="Save global settings">
+          <span class="btn-icon">💾</span><span>Save Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="module-editor" *ngIf="selectedModule as module; else emptyState">
+      <div class="editor-header">
+        <div class="editor-title-wrap">
+          <h2>Module Configuration</h2>
+          <p>Manage APIs, import Postman collections, and run tests for the selected tile.</p>
+        </div>
+        <div class="editor-stats">
+          <span class="stat-pill">APIs {{ module.apis.length }}</span>
+        </div>
+        <div class="editor-actions">
+          <button class="secondary-btn action-btn" (click)="addApi(module)" title="Add API">
+            <span class="btn-icon">➕</span><span>Add API</span>
+          </button>
+          <button class="secondary-btn action-btn" (click)="openPostmanImporter(postmanFileInput)" title="Load Postman collection for this module">
+            <span class="btn-icon">📥</span><span>Load Postman</span>
+          </button>
+          <input
+            #postmanFileInput
+            class="hidden-file-input"
+            type="file"
+            accept="application/json,.json"
+            (change)="onPostmanFileSelected($event, module)"
+          />
+          <button class="primary-btn action-btn" (click)="saveSelectedModule()" title="Save module APIs">
+            <span class="btn-icon">💾</span><span>Save Module</span>
+          </button>
+          <button class="danger-btn action-btn" (click)="removeSavedSelectedModule()" title="Remove saved module APIs">
+            <span class="btn-icon">🧹</span><span>Remove Saved</span>
+          </button>
+          <button class="secondary-btn action-btn" (click)="runAllInModule(module)" title="Test all APIs in this module">
+            <span class="btn-icon">▶</span><span>Test All</span>
+          </button>
+          <button class="danger-btn action-btn" (click)="removeSelectedModule()" title="Delete module">
+            <span class="btn-icon">🗑</span><span>Delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="api-card" *ngFor="let api of module.apis; let i = index; trackBy: trackByApi">
+        <div class="api-card-header">
+          <div class="api-name-row">
+            <input type="checkbox" [(ngModel)]="api.enabled" />
+            <input type="text" [(ngModel)]="api.name" placeholder="API name" />
+          </div>
+          <div class="api-actions">
+            <button class="secondary-btn" (click)="toggleApiSection(api)">
+              {{ api.expanded ? '▾ Collapse' : '▸ Expand' }}
+            </button>
+            <button class="secondary-btn action-btn" (click)="runApiAtIndex(i)" [disabled]="!api.expanded" title="Test this API">
+              <span class="btn-icon">▶</span><span>Test</span>
+            </button>
+            <button class="danger-btn action-btn" (click)="removeApi(module, api.id)" [disabled]="module.apis.length === 1" title="Remove this API">
+              <span class="btn-icon">✕</span><span>Remove</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="api-meta">Added by {{ api.addedBy }} on {{ api.addedAt | date:'medium' }}</div>
+
+        <app-api-tester
+          #tester
+          *ngIf="api.expanded"
+          [initialState]="api.request"
+          [globalEnvironment]="globalSettings.environments[globalSettings.selectedEnvironment]"
+          (stateChange)="onApiStateChange(api, $event)"
+          (requestCompleted)="onApiRequestCompleted(module.name, api, $event)"
+        ></app-api-tester>
+      </div>
+    </section>
+
+    <ng-template #emptyState>
+      <section class="module-editor empty">
+        <h2>No modules available</h2>
+        <p>Add a module tile to start configuring APIs.</p>
+      </section>
+    </ng-template>
+  </div>
+</div>

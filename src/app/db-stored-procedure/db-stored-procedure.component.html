@@ -1,0 +1,208 @@
+<div class="sp-page">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>Stored Procedure Generator</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn action-btn" (click)="goToAnalyzeSP()" title="Analyze SP">
+          <span class="btn-icon">🔍</span><span>Analyze SP</span>
+        </button>
+        <button class="secondary-btn action-btn" (click)="backToHome()" title="Home">
+          <span class="btn-icon">🏠</span><span>Home</span>
+        </button>
+        <button class="logout-btn action-btn" (click)="logout()" title="Logout">
+          <span class="btn-icon">↩</span><span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside class="left-panel">
+      <h2>Procedure Tiles</h2>
+      <div class="tile-list">
+        <button
+          *ngFor="let p of procedures; trackBy: trackByProcedure"
+          class="tile"
+          [class.active]="selectedProcedureId === p.id"
+          (click)="selectProcedure(p.id)"
+        >
+          <strong>{{ p.name }}</strong>
+          <small>{{ p.procedureName }}</small>
+        </button>
+        <div class="empty" *ngIf="procedures.length === 0">No procedure tiles yet.</div>
+      </div>
+
+      <div class="add-box">
+        <input
+          type="text"
+          [(ngModel)]="newProcedureName"
+          placeholder="Tile name"
+          (keyup.enter)="addProcedure()"
+        />
+        <button class="primary-btn action-btn" (click)="addProcedure()">
+          <span class="btn-icon">➕</span><span>Add Tile</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="editor" *ngIf="selectedProcedure as proc; else emptyEditor">
+      <div class="editor-header">
+        <div>
+          <h2>{{ proc.name }}</h2>
+          <p>Configure tables, joins, where clauses, and expected output to auto-generate stored procedure SQL.</p>
+        </div>
+        <div class="editor-actions">
+          <button class="danger-btn action-btn" (click)="removeProcedure(proc.id)">
+            <span class="btn-icon">🗑</span><span>Delete Tile</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Stored Procedure Name</label>
+        <input
+          type="text"
+          [(ngModel)]="proc.procedureName"
+          placeholder="e.g. sp_GetMemberClaims"
+          (ngModelChange)="onProcedureInputsChanged(proc)"
+        />
+      </div>
+
+      <div class="builder-grid">
+        <div class="section">
+          <div class="section-head">
+            <h3>Tables</h3>
+            <div class="inline-add">
+              <input
+                type="text"
+                [(ngModel)]="newTableName"
+                placeholder="Table name"
+                (keyup.enter)="addTable(proc)"
+              />
+              <button class="secondary-btn action-btn" (click)="addTable(proc)">Add Table</button>
+            </div>
+          </div>
+
+          <div class="row table-row" *ngFor="let table of proc.tables; trackBy: trackByTable">
+            <input
+              type="text"
+              [(ngModel)]="table.name"
+              placeholder="Table name"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <input
+              type="text"
+              [(ngModel)]="table.alias"
+              placeholder="Alias"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <button class="danger-btn action-btn" (click)="removeTable(proc, table.id)">Remove</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3>Joins</h3>
+            <button class="secondary-btn action-btn" (click)="addJoin(proc)">Add Join</button>
+          </div>
+
+          <div class="row join-row" *ngFor="let join of proc.joins; trackBy: trackByJoin">
+            <select [(ngModel)]="join.leftTableAlias" (ngModelChange)="onProcedureInputsChanged(proc)">
+              <option *ngFor="let table of proc.tables" [value]="table.alias || ''">{{ table.alias || 'alias' }}</option>
+            </select>
+            <select [(ngModel)]="join.joinType" (ngModelChange)="onProcedureInputsChanged(proc)">
+              <option *ngFor="let type of joinTypes" [value]="type">{{ type }}</option>
+            </select>
+            <select [(ngModel)]="join.rightTableAlias" (ngModelChange)="onProcedureInputsChanged(proc)">
+              <option *ngFor="let table of proc.tables" [value]="table.alias || ''">{{ table.alias || 'alias' }}</option>
+            </select>
+            <input
+              type="text"
+              [(ngModel)]="join.onCondition"
+              placeholder="Join condition, e.g. m.MemberId = c.MemberId"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <button class="danger-btn action-btn" (click)="removeJoin(proc, join.id)">Remove</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3>Where Clauses</h3>
+            <button class="secondary-btn action-btn" (click)="addWhereClause(proc)">Add Clause</button>
+          </div>
+
+          <div class="row where-row" *ngFor="let where of proc.whereClauses; trackBy: trackByWhere">
+            <input
+              type="text"
+              [(ngModel)]="where.field"
+              placeholder="Field, e.g. m.MemberId"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <select [(ngModel)]="where.operator" (ngModelChange)="onProcedureInputsChanged(proc)">
+              <option value="=">=</option>
+              <option value="!=">!=</option>
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value=">=">&gt;=</option>
+              <option value="<=">&lt;=</option>
+              <option value="LIKE">LIKE</option>
+            </select>
+            <input
+              type="text"
+              [(ngModel)]="where.paramName"
+              placeholder="Parameter name"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <input
+              type="text"
+              [(ngModel)]="where.sampleValue"
+              placeholder="Sample value"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <button class="danger-btn action-btn" (click)="removeWhereClause(proc, where.id)">Remove</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3>Expected Output</h3>
+            <button class="secondary-btn action-btn" (click)="addOutputColumn(proc)">Add Output</button>
+          </div>
+
+          <div class="row output-row" *ngFor="let output of proc.outputColumns; trackBy: trackByOutput">
+            <input
+              type="text"
+              [(ngModel)]="output.expression"
+              placeholder="Expression, e.g. m.MemberName or COUNT(*)"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <input
+              type="text"
+              [(ngModel)]="output.alias"
+              placeholder="Alias (optional)"
+              (ngModelChange)="onProcedureInputsChanged(proc)"
+            />
+            <button class="danger-btn action-btn" (click)="removeOutputColumn(proc, output.id)">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="output">
+        <div class="output-head">
+          <h3>Generated SQL</h3>
+          <button class="primary-btn action-btn" (click)="copyStoredProcedure(proc)">Copy SQL</button>
+        </div>
+        <textarea [value]="proc.generatedSql" rows="16" readonly></textarea>
+      </div>
+    </section>
+
+    <ng-template #emptyEditor>
+      <section class="editor empty-editor">
+        <h2>No procedure tile selected</h2>
+        <p>Add a tile from the left panel to start generating stored procedures.</p>
+      </section>
+    </ng-template>
+  </div>
+</div>

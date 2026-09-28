@@ -1,0 +1,237 @@
+<div class="db-config-page">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>DB Configuration</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn action-btn" (click)="backToHome()" title="Home">
+          <span class="btn-icon">🏠</span><span>Home</span>
+        </button>
+        <button class="logout-btn action-btn" (click)="logout()" title="Logout">
+          <span class="btn-icon">↩</span><span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+
+    <!-- Sidebar: Server list -->
+    <aside class="server-list-panel">
+      <h2>DB Servers</h2>
+
+      <div class="server-tiles">
+        <button
+          *ngFor="let s of servers; trackBy: trackByServer"
+          class="server-tile"
+          [class.active]="selectedServerId === s.id"
+          (click)="selectServer(s.id)"
+        >
+          <span class="tile-icon">{{ getTypeIcon(s.type) }}</span>
+          <span class="tile-body">
+            <strong>{{ s.name }}</strong>
+            <small>{{ s.type | uppercase }}</small>
+          </span>
+          <span class="tile-status" [class]="'status-dot ' + s.connectionStatus"></span>
+        </button>
+
+        <div class="empty-state" *ngIf="servers.length === 0">
+          No servers configured yet.
+        </div>
+      </div>
+
+      <!-- Add server -->
+      <div class="add-server-box">
+        <input
+          type="text"
+          [(ngModel)]="newServerName"
+          placeholder="Server name (e.g. Prod DB)"
+          (keyup.enter)="addServer()"
+        />
+        <button class="primary-btn action-btn" (click)="addServer()">
+          <span class="btn-icon">➕</span><span>Add Server</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main editor -->
+    <section class="editor-panel" *ngIf="selectedServer as srv; else noServer">
+
+      <!-- Header -->
+      <div class="editor-header">
+        <div>
+          <h2>{{ srv.name }}</h2>
+          <p>{{ srv.description || 'No description set' }}</p>
+        </div>
+        <div class="editor-actions">
+          <button class="primary-btn action-btn" (click)="saveServer()">
+            <span class="btn-icon">💾</span><span>Save</span>
+          </button>
+          <button class="danger-btn action-btn" (click)="removeServer(srv.id)">
+            <span class="btn-icon">🗑</span><span>Delete</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form grid -->
+      <div class="form-grid">
+
+        <!-- Basic info -->
+        <div class="form-section">
+          <h3 class="section-title">Basic Information</h3>
+
+          <div class="field">
+            <label>Server Name</label>
+            <input type="text" [(ngModel)]="srv.name" placeholder="Friendly name" />
+          </div>
+
+          <div class="field">
+            <label>Description</label>
+            <input type="text" [(ngModel)]="srv.description" placeholder="Optional description" />
+          </div>
+
+          <div class="field">
+            <label>Database Type</label>
+            <select [(ngModel)]="srv.type" (ngModelChange)="onTypeChange(srv)">
+              <option *ngFor="let t of dbTypes" [value]="t.value">{{ t.icon }} {{ t.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Connection details -->
+        <div class="form-section">
+          <h3 class="section-title">Connection Details</h3>
+
+          <div class="field" *ngIf="srv.type !== 'sqlite'">
+            <label>Host / Server Address</label>
+            <input type="text" [(ngModel)]="srv.host" placeholder="e.g. localhost or 192.168.1.10" />
+          </div>
+
+          <div class="field" *ngIf="srv.type !== 'sqlite'">
+            <label>Port</label>
+            <input type="number" [(ngModel)]="srv.port" placeholder="Default port" min="1" max="65535" />
+          </div>
+
+          <div class="field">
+            <label>{{ srv.type === 'sqlite' ? 'Database File Path' : 'Database Name' }}</label>
+            <input type="text" [(ngModel)]="srv.databaseName"
+              [placeholder]="srv.type === 'sqlite' ? 'e.g. C:\\data\\mydb.db' : 'e.g. MyDatabase'" />
+          </div>
+
+          <div class="field" *ngIf="srv.type !== 'sqlite'">
+            <label>Connection Timeout (seconds)</label>
+            <input type="number" [(ngModel)]="srv.connectionTimeout" min="1" max="300" />
+          </div>
+        </div>
+
+        <!-- Authentication -->
+        <div class="form-section" *ngIf="srv.type !== 'sqlite'">
+          <h3 class="section-title">Authentication</h3>
+
+          <div class="field">
+            <label>Username</label>
+            <input type="text" [(ngModel)]="srv.username" placeholder="Database username" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label>Password</label>
+            <input type="password" [(ngModel)]="srv.password" placeholder="Database password" autocomplete="new-password" />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── Connection Test Panel ─── -->
+      <div class="test-panel">
+        <div class="test-panel-header">
+          <h3>🔌 Connection Test</h3>
+          <p class="test-hint">Verify that the database server is reachable with the settings above.</p>
+        </div>
+
+        <div class="test-panel-body">
+          <!-- Status badge -->
+          <div class="status-badge" [class]="'badge-' + srv.connectionStatus">
+            <span class="badge-dot"></span>
+            <span *ngIf="srv.connectionStatus === 'idle'">Not tested yet</span>
+            <span *ngIf="srv.connectionStatus === 'testing'">
+              <span class="spinner"></span> Testing connection…
+            </span>
+            <span *ngIf="srv.connectionStatus === 'success'">
+              ✅ Connected successfully
+              <span class="latency" *ngIf="srv.latencyMs !== null"> — {{ srv.latencyMs }} ms</span>
+            </span>
+            <span *ngIf="srv.connectionStatus === 'failed'">❌ Connection failed</span>
+          </div>
+
+          <!-- Message -->
+          <div class="test-message" *ngIf="srv.connectionMessage">
+            {{ srv.connectionMessage }}
+          </div>
+
+          <!-- Last tested -->
+          <div class="last-tested" *ngIf="srv.lastTestedAt">
+            Last tested: {{ srv.lastTestedAt | date:'medium' }}
+          </div>
+
+          <!-- Action buttons -->
+          <div class="test-actions">
+            <button
+              class="primary-btn action-btn test-btn"
+              [disabled]="srv.connectionStatus === 'testing'"
+              (click)="testConnection(srv)"
+            >
+              <span class="btn-icon">▶</span>
+              <span>{{ srv.connectionStatus === 'testing' ? 'Testing…' : 'Test Connection' }}</span>
+            </button>
+            <button
+              class="secondary-btn action-btn"
+              *ngIf="srv.connectionStatus !== 'idle' && srv.connectionStatus !== 'testing'"
+              (click)="resetStatus(srv)"
+            >
+              <span class="btn-icon">↺</span><span>Reset</span>
+            </button>
+          </div>
+
+          <!-- Details card on success -->
+          <div class="connection-details" *ngIf="srv.connectionStatus === 'success'">
+            <div class="detail-row">
+              <span class="detail-label">Type</span>
+              <span class="detail-value">{{ srv.type | uppercase }}</span>
+            </div>
+            <div class="detail-row" *ngIf="srv.type !== 'sqlite'">
+              <span class="detail-label">Host</span>
+              <span class="detail-value">{{ srv.host }}:{{ srv.port }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Database</span>
+              <span class="detail-value">{{ srv.databaseName }}</span>
+            </div>
+            <div class="detail-row" *ngIf="srv.type !== 'sqlite'">
+              <span class="detail-label">User</span>
+              <span class="detail-value">{{ srv.username }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Latency</span>
+              <span class="detail-value">{{ srv.latencyMs }} ms</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <ng-template #noServer>
+      <section class="editor-panel empty">
+        <div class="empty-editor">
+          <div class="empty-icon">🗄️</div>
+          <h2>No Server Selected</h2>
+          <p>Add a database server from the left panel to get started.</p>
+        </div>
+      </section>
+    </ng-template>
+
+  </div>
+</div>

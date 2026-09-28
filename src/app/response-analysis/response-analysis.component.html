@@ -1,0 +1,86 @@
+<div class="response-analysis-page">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <h1>Response Analysis</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{{ currentUser }}</strong></span>
+        <button class="secondary-btn" (click)="backToHome()">Home</button>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="secondary-btn" [class.active]="selectedGranularity === 'day'" (click)="setGranularity('day')">Day Wise</button>
+        <button class="secondary-btn" [class.active]="selectedGranularity === 'month'" (click)="setGranularity('month')">Month Wise</button>
+      </div>
+      <button class="primary-btn" (click)="refresh()">Refresh</button>
+    </div>
+
+    <div class="empty-state" *ngIf="!moduleSummary.length">
+      <h2>No API execution data</h2>
+      <p>Run module APIs from Configuration to see success and failure analysis here.</p>
+    </div>
+
+    <div class="summary-grid" *ngIf="moduleSummary.length">
+      <button class="summary-card module-tile" [class.selected]="selectedModuleName === item.moduleName" *ngFor="let item of moduleSummary" (click)="selectModule(item.moduleName)">
+        <h3>{{ item.moduleName }}</h3>
+        <div class="summary-stats">
+          <span class="stat success">Success: {{ item.success }}</span>
+          <span class="stat failed">Failed: {{ item.failed }}</span>
+        </div>
+        <p>Total APIs Hit: {{ item.total }}</p>
+        <p>Avg Response: {{ item.avgResponseMs }} ms</p>
+      </button>
+    </div>
+
+    <div class="panel" *ngIf="detailRows.length">
+      <h2>{{ selectedGranularity === 'day' ? 'Day Wise' : 'Month Wise' }} API Status Grid</h2>
+      <div class="grid-toolbar">
+        <div class="grid-filters">
+          <select [(ngModel)]="selectedStatusFilter" (ngModelChange)="applyFiltersAndSorting()">
+            <option value="all">All Results</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+          </select>
+          <input type="text" [(ngModel)]="searchText" (ngModelChange)="applyFiltersAndSorting()" placeholder="Search API, URL, module" />
+          <button class="secondary-btn" (click)="clearFilters()">Clear Filters</button>
+        </div>
+        <button class="primary-btn" (click)="downloadData()" [disabled]="!filteredRows.length">Download CSV</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th><button class="sort-btn" (click)="setSort('period')">Period{{ getSortLabel('period') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('moduleName')">Module{{ getSortLabel('moduleName') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('apiName')">API{{ getSortLabel('apiName') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('method')">Method{{ getSortLabel('method') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('status')">Status{{ getSortLabel('status') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('success')">Result{{ getSortLabel('success') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('responseTimeMs')">Response (ms){{ getSortLabel('responseTimeMs') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('executedAt')">Executed At{{ getSortLabel('executedAt') }}</button></th>
+            <th><button class="sort-btn" (click)="setSort('url')">URL{{ getSortLabel('url') }}</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filteredRows">
+            <td>{{ row.period }}</td>
+            <td>{{ row.moduleName }}</td>
+            <td>{{ row.apiName }}</td>
+            <td>{{ row.method }}</td>
+            <td>{{ row.status }} {{ row.statusText }}</td>
+            <td [class.success-text]="row.success" [class.failed-text]="!row.success">
+              {{ row.success ? 'Success' : 'Failed' }}
+            </td>
+            <td>{{ row.responseTimeMs }}</td>
+            <td>{{ row.executedAt | date:'short' }}</td>
+            <td class="url-cell" [title]="row.url">{{ row.url }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-grid" *ngIf="!filteredRows.length">No rows match the current filter.</div>
+    </div>
+  </div>
+</div>

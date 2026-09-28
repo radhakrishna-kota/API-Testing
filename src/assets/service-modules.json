@@ -1,0 +1,121 @@
+{
+  "modules": [
+    {
+      "name": "Claims",
+      "description": "Configure and test claim APIs",
+      "apis": [
+        {
+          "name": "API 1",
+          "enabled": true,
+          "expanded": true,
+          "addedBy": "System",
+          "addedAt": "2026-01-01T00:00:00.000Z",
+          "request": {
+            "url": "",
+            "method": "GET",
+            "queryParams": [
+              {
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "enabled": true
+              }
+            ],
+            "requestBody": "",
+            "activeTab": "params",
+            "authType": "windows",
+            "windowsDomain": "",
+            "windowsUsername": "",
+            "windowsPassword": "",
+            "basicUsername": "",
+            "basicPassword": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provider",
+      "description": "Configure and test provider APIs",
+      "apis": [
+        {
+          "name": "API 1",
+          "enabled": true,
+          "expanded": true,
+          "addedBy": "System",
+          "addedAt": "2026-01-01T00:00:00.000Z",
+          "request": {
+            "url": "",
+            "method": "GET",
+            "queryParams": [
+              {
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "enabled": true
+              }
+            ],
+            "requestBody": "",
+            "activeTab": "params",
+            "authType": "windows",
+            "windowsDomain": "",
+            "windowsUsername": "",
+            "windowsPassword": "",
+            "basicUsername": "",
+            "basicPassword": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "SOA Services Intelligence",
+      "description": "Data-driven service scenarios and inventory powered by SOA services information workbook",
+      "apis": [
+        {
+          "name": "Catalog Health Check",
+          "enabled": true,
+          "expanded": true,
+          "addedBy": "System",
+          "addedAt": "2026-01-01T00:00:00.000Z",
+          "request": {
+            "url": "",
+            "method": "GET",
+            "queryParams": [
+              {
+                "key": "sheet",
+                "value": "Hmsa_Core_Services",
+                "enabled": true
+              }
+            ],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "enabled": true
+              }
+            ],
+            "requestBody": "",
+            "activeTab": "params",
+            "authType": "windows",
+            "windowsDomain": "",
+            "windowsUsername": "",
+            "windowsPassword": "",
+            "basicUsername": "",
+            "basicPassword": ""
+          }
+        }
+      ]
+    }
+  ]
+}

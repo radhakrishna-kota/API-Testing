@@ -1,0 +1,194 @@
+<div class="api-tester">
+
+  <!-- URL Bar -->
+  <div class="url-bar">
+    <select class="method-select" [(ngModel)]="method" (ngModelChange)="onFieldChange()" [ngClass]="'method-' + method.toLowerCase()">
+      <option *ngFor="let m of methods" [value]="m">{{ m }}</option>
+    </select>
+    <input
+      class="url-input"
+      type="text"
+      placeholder="Enter request URL (e.g. https://api.example.com/users)"
+      [(ngModel)]="url"
+      (ngModelChange)="onFieldChange()"
+      (blur)="onUrlChange()"
+    />
+    <button class="send-btn" (click)="sendRequest()" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Send</span>
+      <span *ngIf="isLoading" class="loading-spinner">⏳</span>
+    </button>
+    <button class="clear-btn" (click)="clearRequest()" title="Clear">✕</button>
+  </div>
+
+  <!-- Request Tabs -->
+  <div class="panel">
+    <div class="tabs">
+      <button [class.active]="activeTab === 'params'" (click)="setActiveTab('params')">
+        Query Params
+        <span class="badge" *ngIf="getEnabledQueryParamCount() > 0">
+          {{ getEnabledQueryParamCount() }}
+        </span>
+      </button>
+      <button [class.active]="activeTab === 'headers'" (click)="setActiveTab('headers')">
+        Headers
+        <span class="badge" *ngIf="getEnabledHeaderCount() > 0">
+          {{ getEnabledHeaderCount() }}
+        </span>
+      </button>
+      <button [class.active]="activeTab === 'auth'" (click)="setActiveTab('auth')">Auth</button>
+      <button *ngIf="hasBody" [class.active]="activeTab === 'body'" (click)="setActiveTab('body')">Body</button>
+    </div>
+
+    <!-- Query Params Tab -->
+    <div *ngIf="activeTab === 'params'" class="tab-content">
+      <table class="kv-table">
+        <thead>
+          <tr><th></th><th>Key</th><th>Value</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let param of queryParams; let i = index">
+            <td><input type="checkbox" [(ngModel)]="param.enabled" (ngModelChange)="onFieldChange()" /></td>
+            <td><input type="text" placeholder="Key" [(ngModel)]="param.key" (ngModelChange)="onFieldChange()" /></td>
+            <td><input type="text" placeholder="Value" [(ngModel)]="param.value" (ngModelChange)="onFieldChange()" /></td>
+            <td>
+              <button class="remove-btn" (click)="removeQueryParam(i)" *ngIf="queryParams.length > 1">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="add-btn" (click)="addQueryParam()">+ Add Parameter</button>
+    </div>
+
+    <!-- Headers Tab -->
+    <div *ngIf="activeTab === 'headers'" class="tab-content">
+      <table class="kv-table">
+        <thead>
+          <tr><th></th><th>Key</th><th>Value</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let header of headers; let i = index">
+            <td><input type="checkbox" [(ngModel)]="header.enabled" (ngModelChange)="onFieldChange()" /></td>
+            <td><input type="text" placeholder="Header Name" [(ngModel)]="header.key" (ngModelChange)="onFieldChange()" /></td>
+            <td><input type="text" placeholder="Header Value" [(ngModel)]="header.value" (ngModelChange)="onFieldChange()" /></td>
+            <td>
+              <button class="remove-btn" (click)="removeHeader(i)" *ngIf="headers.length > 1">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="add-btn" (click)="addHeader()">+ Add Header</button>
+    </div>
+
+    <!-- Auth Tab -->
+    <div *ngIf="activeTab === 'auth'" class="tab-content auth-tab">
+      <div class="auth-type-selector">
+        <label>
+          <input type="radio" name="authType" [checked]="authType === 'windows'" (click)="setAuthType('windows')" />
+          Windows Credentials (NTLM / Kerberos)
+        </label>
+        <label>
+          <input type="radio" name="authType" [checked]="authType === 'basic'" (click)="setAuthType('basic')" />
+          Basic Auth
+        </label>
+        <label>
+          <input type="radio" name="authType" [checked]="authType === 'none'" (click)="setAuthType('none')" />
+          No Auth
+        </label>
+      </div>
+
+      <div *ngIf="authType === 'windows'" class="auth-fields">
+        <div class="form-row">
+          <label>Domain</label>
+          <input type="text" [(ngModel)]="windowsDomain" (ngModelChange)="onFieldChange()" placeholder="Example: CORP" />
+        </div>
+        <div class="form-row">
+          <label>Username</label>
+          <input type="text" [(ngModel)]="windowsUsername" (ngModelChange)="onFieldChange()" placeholder="Windows username" />
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" [(ngModel)]="windowsPassword" (ngModelChange)="onFieldChange()" placeholder="Password" />
+        </div>
+        <div class="auth-info windows-auth">
+          <span class="info-icon">🔐</span>
+          <div>
+            <strong>Windows Credentials Active</strong>
+            <p>When username is entered, credentials are sent as Authorization header using DOMAIN\username format. If domain is empty, only username is used.</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="authType === 'basic'" class="auth-fields">
+        <div class="form-row">
+          <label>Username</label>
+          <input type="text" [(ngModel)]="basicUsername" (ngModelChange)="onFieldChange()" placeholder="Windows username" />
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" [(ngModel)]="basicPassword" (ngModelChange)="onFieldChange()" placeholder="Password" />
+        </div>
+      </div>
+
+      <div *ngIf="authType === 'none'" class="auth-info">
+        <p>No authentication will be applied to this request.</p>
+      </div>
+    </div>
+
+    <!-- Body Tab -->
+    <div *ngIf="activeTab === 'body' && hasBody" class="tab-content">
+      <textarea
+        class="body-editor"
+        [(ngModel)]="requestBody"
+        (ngModelChange)="onFieldChange()"
+        placeholder='{"key": "value"}'
+        rows="8"
+        spellcheck="false"
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Response Section -->
+  <div class="response-panel" *ngIf="response || isLoading">
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <span>Sending request...</span>
+    </div>
+
+    <div *ngIf="response && !isLoading">
+      <!-- Response Status Bar -->
+      <div class="response-status-bar">
+        <span class="status-badge" [ngClass]="getStatusClass(response.status)">
+          {{ response.status }} {{ response.statusText }}
+        </span>
+        <span class="response-meta">⏱ {{ response.time }} ms</span>
+        <span class="response-meta">📦 {{ response.size }}</span>
+        <button class="copy-btn" (click)="copyToClipboard(response.body)" title="Copy response">📋 Copy</button>
+      </div>
+
+      <!-- Response Tabs -->
+      <div class="tabs">
+        <button [class.active]="activeResponseTab === 'body'" (click)="setActiveResponseTab('body')">Body</button>
+        <button [class.active]="activeResponseTab === 'headers'" (click)="setActiveResponseTab('headers')">Headers</button>
+      </div>
+
+      <!-- Response Body -->
+      <div *ngIf="activeResponseTab === 'body'" class="response-body">
+        <pre [ngClass]="{'json-response': isJsonResponse}">{{ response.body }}</pre>
+      </div>
+
+      <!-- Response Headers -->
+      <div *ngIf="activeResponseTab === 'headers'" class="response-headers-tab">
+        <table class="headers-table">
+          <thead><tr><th>Header</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let entry of getHeaderEntries()">
+              <td class="header-key">{{ entry[0] }}</td>
+              <td>{{ entry[1] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

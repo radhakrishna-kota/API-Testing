@@ -1,0 +1,62 @@
+<div class="analysis-shell">
+  <header class="hero">
+    <h1>Interview Video Analyzer</h1>
+    <p>Upload complete interview video and click analyze to generate candidate behavior and lip-sync report.</p>
+  </header>
+
+  <section class="upload-panel">
+    <label for="videoInput">Interview Video</label>
+    <input id="videoInput" type="file" accept="video/*" (change)="onInterviewVideoSelected($event)" />
+
+    <div class="actions">
+      <button type="button" class="btn primary" (click)="analyzeInterviewVideo()" [disabled]="!uploadedInterviewFile || isAnalyzing">
+        {{ isAnalyzing ? 'Analyzing...' : 'Analyze Interview' }}
+      </button>
+    </div>
+
+    <p class="status">{{ uploadStatus }}</p>
+
+    <div class="progress-wrap" *ngIf="isAnalyzing || analysisProgress > 0">
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="analysisProgress"></div>
+      </div>
+      <span>{{ getProgressLabel() }}</span>
+    </div>
+  </section>
+
+
+  <section class="preview-panel" *ngIf="uploadedMediaUrl">
+    <div class="preview-info">
+      <h2>Uploaded Interview Video</h2>
+      <p *ngIf="selectedMetricIndex >= 0" class="selected-metric-label">{{ getSelectedMetricLabel() }}</p>
+      <p *ngIf="selectedMetricIndex < 0" class="hint-label">{{ getSelectedMetricLabel() }}</p>
+    </div>
+    <video #previewVideo [src]="uploadedMediaUrl" playsinline muted controls></video>
+  </section>
+
+  <section class="report-panel" *ngIf="analysisReport">
+    <h2>Analysis Report</h2>
+    <p><strong>Overall Risk:</strong> {{ analysisReport.overallRiskPercentage }}% ({{ analysisReport.overallVerdict }})</p>
+    <p><strong>Interview Duration:</strong> {{ analysisReport.analyzedDurationLabel }}</p>
+    <p><strong>Frames Analyzed:</strong> {{ analysisReport.sampledFrames }}</p>
+
+    <div class="metric-grid">
+      <article 
+        class="metric-card" 
+        *ngFor="let metric of analysisReport.metrics; let i = index" 
+        [class.high]="metric.severity === 'high'" 
+        [class.moderate]="metric.severity === 'moderate'"
+        [class.selected]="selectedMetricIndex === i"
+        (click)="onMetricCardClick(i)">
+        <h3>{{ metric.parameter }}</h3>
+        <p><strong>Risk:</strong> {{ metric.riskPercentage }}%</p>
+        <p><strong>Severity:</strong> {{ metric.severity }}</p>
+        <p>{{ metric.observation }}</p>
+        <p *ngIf="metric.firstOccurrenceTimeSec !== undefined" class="metric-time">📍 First occurrence: {{ metric.firstOccurrenceTimeSec | number:'1.1-1' }}s</p>
+      </article>
+    </div>
+
+    <p class="summary">{{ analysisReport.summary }}</p>
+  </section>
+
+</div>

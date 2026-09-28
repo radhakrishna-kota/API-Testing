@@ -1,0 +1,85 @@
+<div class="analysis-shell">
+  <header class="hero">
+    <div class="hero-top">
+      <h1>Free LLM Interview Verification</h1>
+      <a routerLink="/home" class="back-link">Back to Home</a>
+    </div>
+    <p>Runs browser signal extraction and verifies interview integrity with a free OpenRouter model.</p>
+  </header>
+
+  <section class="upload-panel">
+    <label for="freeLlmVideoInput">Interview Video</label>
+    <input id="freeLlmVideoInput" type="file" accept="video/*" (change)="onInterviewVideoSelected($event)" />
+    <p class="status">{{ uploadStatus }}</p>
+  </section>
+
+  <section class="llm-panel">
+    <h2>AI Fraud Detection <span class="llm-badge">Llama 3.1 8B Free</span></h2>
+    <p class="llm-desc">Enter OpenRouter API key and run free LLM based interview verification.</p>
+
+    <div class="llm-key-row">
+      <label for="modelSelect">Free LLM Model</label>
+      <select id="modelSelect" [(ngModel)]="selectedModel" class="model-select">
+        <option *ngFor="let model of availableModels" [value]="model.id">{{ model.name }}</option>
+      </select>
+    </div>
+
+    <div class="llm-key-row">
+      <label for="openRouterKey">OpenRouter API Key</label>
+      <div class="llm-key-input-wrap">
+        <input
+          id="openRouterKey"
+          [type]="showApiKey ? 'text' : 'password'"
+          [(ngModel)]="openRouterApiKey"
+          placeholder="sk-or-v1-..."
+          autocomplete="off"
+          spellcheck="false" />
+        <button type="button" class="btn-icon" (click)="showApiKey = !showApiKey" [title]="showApiKey ? 'Hide key' : 'Show key'">
+          {{ showApiKey ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link">Get a free OpenRouter key</a>
+    </div>
+
+    <div class="llm-actions">
+      <button
+        type="button"
+        class="btn llm-btn"
+        (click)="runFreeLlmVerification()"
+        [disabled]="!uploadedInterviewFile || isAnalyzing || !openRouterApiKey.trim()">
+        {{ isAnalyzing ? 'Analyzing with Free LLM...' : 'Verify Interview (Free LLM)' }}
+      </button>
+    </div>
+
+    <p class="llm-status" *ngIf="llmStatus">{{ llmStatus }}</p>
+  </section>
+
+  <section class="preview-panel" *ngIf="uploadedMediaUrl">
+    <h2>Uploaded Interview Video</h2>
+    <video [src]="uploadedMediaUrl" playsinline muted controls></video>
+  </section>
+
+  <section class="llm-report-panel" *ngIf="llmReport">
+    <h2>Free LLM Integrity Report</h2>
+
+    <div class="llm-verdict" [class.genuine]="llmReport.verdict === 'genuine'" [class.suspicious]="llmReport.verdict === 'suspicious'" [class.likely-proxy]="llmReport.verdict === 'likely-proxy'">
+      <span class="verdict-label">Verdict:</span>
+      <span class="verdict-value">{{ llmReport.verdict | uppercase }}</span>
+      <span class="confidence-tag">Confidence: {{ llmReport.confidence }}</span>
+      <span class="model-tag">Model: {{ llmReport.model }}</span>
+    </div>
+
+    <div class="llm-indicator-grid">
+      <div class="llm-indicator-card" *ngFor="let ind of llmReport.indicators" [class.flagged]="ind.flagged">
+        <div class="ind-header">
+          <span class="ind-icon">{{ ind.flagged ? 'FLAG' : 'OK' }}</span>
+          <strong>{{ ind.label }}</strong>
+        </div>
+        <p class="ind-detail">{{ ind.detail }}</p>
+      </div>
+    </div>
+
+    <p class="llm-summary">{{ llmReport.summary }}</p>
+    <p class="llm-disclaimer">This model is free-tier and should be used as supporting evidence only.</p>
+  </section>
+</div>
